@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Claves repetidas</title>
+
+<!-- CSS -->
+<link rel="stylesheet" href="styles.css">
+
+<!-- Librería XLSX -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<h2>Asignación automática de claves por oficina</h2>
+
+<section class="formulario">
+    <div>
+        <strong>Número de empleado</strong>
+        <input type="text" id="empleado" placeholder="79101">
+    </div>
+
+        <div class="file">
+            <strong>1 CSV – Claves que YA tiene el usuario</strong>
+            <label class="file-btn">
+                Seleccionar archivo CSV
+                <input type="file" id="csvPersonas" accept=".csv" hidden>
+            </label>
+        </div>
+
+    <div class="full">
+        <strong>2 Claves de OFICINAS a asignar</strong>
+        <textarea id="oficinasInput" placeholder="0001&#10;1C&#10;J105"></textarea>
+    </div>
+
+    <div class="acciones">
+        <button id="btnProcesar">Procesar</button>
+    </div>
+    </section>
+
+    <div class="dashboard">
+
+    <section>
+        <h3>🟢 Claves que YA TIENE</h3>
+        <table id="tablaTiene"></table>
+    </section>
+
+    <section>
+        <h3>🟠 Claves INACTIVAS (REACTIVAR)</h3>
+        <table id="tablaInactivas"></table>
+    </section>
+
+    <section>
+        <h3>🟡 Claves que FALTAN por agregar</h3>
+        <table id="tablaFaltan"></table>
+    </section>
+
+    <section>
+        <h3>🔴 Oficinas inválidas</h3>
+        <table id="tablaErrores"></table>
+    </section>
+
+    <section>
+        <h3>🔴 Claves que se deben INHABILITAR</h3>
+        <table id="tablaBajas"></table>
+    </section>
+
+</div>
+
+<!-- JS -->
+<script src="scripts.js"></script>
+</body>
+</html>

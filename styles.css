@@ -1,0 +1,281 @@
+/* =========================
+   1. BASE
+========================= */
+body {
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at top, #eef2f7, #e2e8f0);
+    color: #1e293b;
+    max-width: 1600px;
+    margin: 16px auto;
+}
+
+/* =========================
+   2. SECCIONES (CARDS)
+========================= */
+section {
+    background: #ffffff;
+    padding: 18px 20px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    box-shadow:
+        0 10px 20px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* =========================
+   3. TÍTULOS
+========================= */
+h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    color: #0f172a;
+    text-align: center;
+}
+
+h3 {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #334155;
+    border-left: 4px solid #3b82f6;
+    padding-left: 10px;
+}
+
+/* =========================
+   4. FORMULARIO SUPERIOR
+========================= */
+.formulario {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 18px;
+    max-width: 760px;
+    margin: 0 auto 24px auto;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    padding: 22px 24px;
+    border-radius: 18px;
+    box-shadow:
+        0 12px 24px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Contenedores internos */
+.formulario > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Labels */
+.formulario strong {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Inputs y textarea */
+.formulario input[type="text"],
+.formulario textarea {
+    margin-top: 6px;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.formulario input[type="text"]:focus,
+.formulario textarea:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* Textarea ocupa todo el ancho */
+.formulario .full {
+    grid-column: span 2;
+}
+
+/* Acciones del formulario */
+.formulario .acciones {
+    grid-column: span 2;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+/* Botón principal */
+.formulario button {
+    padding: 12px 28px;
+    font-size: 14px;
+    border-radius: 14px;
+}
+
+/* Botón de archivo */
+.file-btn {
+    margin-top: 6px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #f1f5f9;
+    border: 1px dashed #cbd5e1;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.file-btn:hover {
+    background: #e0f2fe;
+    border-color: #2563eb;
+    color: #1d4ed8;
+}
+
+/* =========================
+   5. INPUTS GENERALES
+========================= */
+input[type="text"],
+textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    font-size: 12px;
+    margin-top: 6px;
+    box-sizing: border-box;
+    background: #f8fafc;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+textarea {
+    height: 90px;
+    resize: vertical;
+}
+
+/* =========================
+   6. BOTONES
+========================= */
+button {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.45);
+}
+
+/* =========================
+   7. TABLAS
+========================= */
+table {
+    width: 100%;
+    font-size: 12px;
+    margin-top: 8px;
+    border-collapse: separate;
+    border-spacing: 0;
+    display: block;
+    overflow-y: auto;
+}
+
+th {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    padding: 8px;
+    font-size: 12px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+tr:hover td {
+    background: #e0f2fe;
+}
+
+/* Scroll tablas */
+table::-webkit-scrollbar {
+    width: 6px;
+}
+
+table::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 6px;
+}
+
+/* =========================
+   8. DASHBOARD DE RESULTADOS
+========================= */
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.dashboard section {
+    display: flex;
+    flex-direction: column;
+    min-height: 300px; /* altura inicial más elegante */
+    max-height: 520px;
+}
+
+.dashboard table {
+    flex: 1;
+}
+
+/* Última sección a lo ancho */
+.dashboard section:last-child {
+    grid-column: span 2;
+}
+
+/* Tablas vacías con mensaje y fondo */
+.dashboard table:empty::before {
+    content: "No hay datos disponibles";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-style: italic;
+    height: 100%;
+    text-align: center;
+}
+
+.dashboard table:empty {
+    background: repeating-linear-gradient(
+        45deg,
+        #f1f5f9,
+        #f1f5f9 10px,
+        #ffffff 10px,
+        #ffffff 20px
+    );
+    border-radius: 10px;
+}
+
+.dashboard section table:empty + h3 {
+    border-color: #cbd5e1; /* gris más suave */
+}
