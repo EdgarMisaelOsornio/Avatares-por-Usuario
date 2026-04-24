@@ -176,19 +176,7 @@ function procesar() {
         .map(o => o.trim().toUpperCase())
         .filter(Boolean);
 
-    // Detectar modo de las oficinas a quitar por el primer valor
-    let modoQuitar = null; // "NUM" | "NOM"
-    if (oficinasQuitarRaw.length > 0) {
-        const primero = oficinasQuitarRaw[0];
-        if (/^\d+$/.test(primero)) {
-            modoQuitar = "NUM";
-        } else if (/^[A-Z]{2,4}$/.test(primero)) {
-            modoQuitar = "NOM";
-        } else {
-            alert("⚠️ Formato inválido en 'Oficinas a quitar'.\nUsa solo números (0001) o nomenclatura (MXN).");
-            return;
-        }
-    }
+    // No se necesita detectar modo: cada valor se busca directamente en el catálogo
 
     // Mapa rápido por CLAVE y por NOMENCLATURA
     const mapOficinas   = {};
@@ -220,33 +208,23 @@ function procesar() {
     const oficinasQuitarSet = new Set();
 
     // Construir set de oficinas a quitar
+    // Estrategia: buscar cada valor como CLAVE (con padding si es numérico),
+    // luego como NOMENCLATURA directa. Así soporta: "3472", "1C", "V417", "MXS", etc.
     let errorEnQuitar = false;
     oficinasQuitarRaw.forEach(o => {
         if (errorEnQuitar) return;
 
-        if (modoQuitar === "NUM") {
-            if (!/^\d+$/.test(o)) {
-                alert(`⚠️ Formato mixto en oficinas a quitar: "${o}" no es numérico.`);
-                errorEnQuitar = true;
-                return;
-            }
-            const clave = o.padStart(4, "0");
-            const of = mapOficinas[clave];
-            if (!of) {
-                alert(`⚠️ La oficina ${clave} no existe en el catálogo XLSX.`);
-                errorEnQuitar = true;
-                return;
-            }
-            oficinasQuitarSet.add(of.NOMENCLATURA);
-        }
+        // Intentar como CLAVE numérica (padding a 4 dígitos)
+        const claveNorm = /^\d+$/.test(o) ? o.padStart(4, "0") : o;
 
-        if (modoQuitar === "NOM") {
-            if (!/^[A-Z]{2,4}$/.test(o)) {
-                alert(`⚠️ Formato mixto en oficinas a quitar: "${o}" no es nomenclatura válida.`);
-                errorEnQuitar = true;
-                return;
-            }
-            oficinasQuitarSet.add(o);
+        // Buscar en el catálogo: primero por CLAVE, luego por NOMENCLATURA
+        const of = mapOficinas[claveNorm] || mapPorNom[o];
+
+        if (of) {
+            oficinasQuitarSet.add(of.NOMENCLATURA);
+        } else {
+            alert(`⚠️ "${o}" no se encontró como CLAVE ni como NOMENCLATURA en el catálogo XLSX.`);
+            errorEnQuitar = true;
         }
     });
 
