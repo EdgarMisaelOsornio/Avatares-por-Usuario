@@ -353,12 +353,28 @@ document.getElementById("btnExportar").addEventListener("click", () => {
     tablas.forEach(tabla => {
         const table = document.getElementById(tabla.id);
 
-        // CORRECCIÓN: <= 1 porque la fila 0 siempre es el encabezado
         if (!table || table.rows.length <= 1) {
             const ws = XLSX.utils.aoa_to_sheet([["No hay datos"]]);
             XLSX.utils.book_append_sheet(wb, ws, tabla.nombre);
         } else {
             const ws = XLSX.utils.table_to_sheet(table);
+
+            // Aplicar formato "0000" a la columna A (N° OFICINA)
+            // para que 1 → 0001, 5 → 0005, etc.
+            const range = XLSX.utils.decode_range(ws["!ref"]);
+            for (let row = range.s.r + 1; row <= range.e.r; row++) {
+                const cellAddr = XLSX.utils.encode_cell({ r: row, c: 0 });
+                if (ws[cellAddr]) {
+                    const val = ws[cellAddr].v;
+                    const num = Number(val);
+                    if (!isNaN(num) && String(val).trim() !== "") {
+                        ws[cellAddr].t = "n";
+                        ws[cellAddr].v = num;
+                    }
+                    ws[cellAddr].z = "0000";
+                }
+            }
+
             XLSX.utils.book_append_sheet(wb, ws, tabla.nombre);
         }
     });
