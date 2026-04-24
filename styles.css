@@ -27,24 +27,28 @@ body {
     min-height: 100vh;
 }
 
+/* Responsive base */
+@media (max-width: 600px) {
+    body { padding: 24px 16px; }
+}
+
 /* =========================
    2. CONTENEDORES PRINCIPALES
 ========================= */
 h2 {
     text-align: center;
-    font-size: 32px;
+    font-size: clamp(20px, 4vw, 32px);
     font-weight: 900;
     margin-bottom: 50px;
     letter-spacing: -0.025em;
     background: linear-gradient(to right, #1e293b, #2563eb);
-    
-    /* Propiedades de compatibilidad */
-    -webkit-background-clip: text; /* Para Chrome/Safari */
-    background-clip: text;         /* Propiedad estándar (Elimina la advertencia) */
+
+    -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
-    color: transparent;            /* Fallback para otros navegadores */
-    
-    display: block;                /* Asegura el ancho para el degradado */
+    color: transparent;
+
+    display: block;
 }
 
 section {
@@ -54,16 +58,17 @@ section {
     margin-bottom: 40px;
     border: 1px solid rgba(255, 255, 255, 0.7);
     box-shadow: var(--shadow-soft);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 section:hover {
     box-shadow: var(--shadow-bold);
-    transform: translateY(-4px);
+    transform: translateY(-2px); /* reducido de -4px para que no moleste en tablas */
 }
 
 /* =========================
-   3. FORMULARIO REDISEÑADO
+   3. FORMULARIO
 ========================= */
 .formulario {
     display: grid;
@@ -104,7 +109,7 @@ section:hover {
     font-weight: 700;
 }
 
-input[type="text"], 
+input[type="text"],
 textarea {
     width: 100%;
     padding: 16px;
@@ -125,7 +130,7 @@ input:focus, textarea:focus {
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
 }
 
-/* Botón de archivo con estilo "dropzone" */
+/* Botón de archivo tipo dropzone */
 .file-btn {
     display: flex;
     align-items: center;
@@ -137,6 +142,7 @@ input:focus, textarea:focus {
     color: var(--text-muted);
     font-weight: 600;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .file-btn:hover {
@@ -147,28 +153,108 @@ input:focus, textarea:focus {
 }
 
 /* =========================
-   4. BOTONES DE ACCIÓN
+   4. BADGES DE ESTADO
+========================= */
+.status-badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: #f1f5f9;
+    color: var(--text-muted);
+}
+
+.status-badge.status-ok {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.status-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.status-warn {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.status-loading {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* Contenedor del estado XLSX */
+.xlsx-status {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* =========================
+   5. RESUMEN BANNER
+========================= */
+.resumen-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    max-width: 1000px;
+    margin: 0 auto 40px auto;
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 20px 32px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255,255,255,0.7);
+}
+
+.resumen-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot-green  { background: var(--success); }
+.dot-yellow { background: var(--warning); }
+.dot-red    { background: var(--danger); }
+.dot-indigo { background: #6366f1; }
+.dot-dark   { background: #334155; }
+
+/* =========================
+   6. BOTONES DE ACCIÓN
 ========================= */
 .acciones {
     grid-column: span 2;
     display: flex;
     justify-content: center;
-    gap: 24px;
+    gap: 16px;
     margin-top: 20px;
+    flex-wrap: wrap;
 }
 
 button {
-    padding: 16px 40px;
-    border-radius: 100px; /* Estilo píldora */
+    padding: 14px 36px;
+    border-radius: 100px;
     font-weight: 700;
     border: none;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 16px;
+    font-size: 15px;
     letter-spacing: 0.025em;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 #btnProcesar {
@@ -182,41 +268,57 @@ button {
 }
 
 button:hover {
-    transform: scale(1.05);
+    transform: scale(1.04);
     filter: brightness(1.1);
     box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2);
 }
 
+button:active {
+    transform: scale(0.98);
+}
+
 /* =========================
-   5. DASHBOARD Y TABLAS
+   7. DASHBOARD Y TABLAS
 ========================= */
 .dashboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(550px, 100%), 1fr));
     gap: 32px;
 }
 
 .dashboard section {
-    min-height: 450px;
+    min-height: 200px;
     padding: 32px;
 }
 
 h3 {
     margin-top: 0;
     margin-bottom: 24px;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: var(--text-main);
     padding-bottom: 12px;
     border-bottom: 2px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Indicadores de estado elegantes */
-section:has(#tablaTiene) { border-top: 8px solid var(--success); }
-section:has(#tablaFaltan) { border-top: 8px solid var(--warning); }
-section:has(#tablaInactivas) { border-top: 8px solid #6366f1; }
-section:has(#tablaBajas) { border-top: 8px solid var(--danger); }
-section:has(#tablaErrores) { border-top: 8px solid #334155; }
+.conteo {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+/* Indicadores de color por sección */
+section:has(#tablaTiene)    { border-top: 6px solid var(--success); }
+section:has(#tablaFaltan)   { border-top: 6px solid var(--warning); }
+section:has(#tablaInactivas){ border-top: 6px solid #6366f1; }
+section:has(#tablaBajas)    { border-top: 6px solid var(--danger); }
+section:has(#tablaErrores)  { border-top: 6px solid #334155; }
 
 table {
     width: 100%;
@@ -225,19 +327,20 @@ table {
 
 th {
     background: #f8fafc;
-    padding: 16px 12px;
+    padding: 12px 10px;
     color: var(--text-muted);
     font-weight: 700;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    text-align: left;
 }
 
 td {
-    padding: 16px 12px;
+    padding: 12px 10px;
     border-bottom: 1px solid #f1f5f9;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
+    font-size: 13px;
     color: #475569;
 }
 
@@ -250,7 +353,19 @@ tr:hover td {
     color: var(--primary);
 }
 
-/* Scrollbar minimalista */
+/* Mensaje de vacío */
+.empty-msg {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-style: italic;
+    padding: 32px 0;
+    margin: 0;
+}
+
+/* =========================
+   8. SCROLLBAR MINIMALISTA
+========================= */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }

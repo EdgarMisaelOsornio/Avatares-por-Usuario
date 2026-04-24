@@ -8,48 +8,76 @@ document.getElementById("btnProcesar").addEventListener("click", procesar);
 
 /* ===============================
    CARGA XLSX AUTOMÁTICA
+   (también soporta apertura por file://)
 =============================== */
 function cargarXLSXAutomatico() {
+    const statusEl = document.getElementById("xlsxStatus");
+
     fetch("OFICINAS NOMENCLATURAS.xlsx")
         .then(res => {
-            if (!res.ok) throw new Error("No se pudo cargar OFICINAS NOMENCLATURAS.xlsx");
+            if (!res.ok) throw new Error("HTTP " + res.status);
             return res.arrayBuffer();
         })
-        .then(data => {
-            const wb = XLSX.read(data, { type: "array" });
-            const hoja = wb.Sheets[wb.SheetNames[0]];
+        .then(data => procesarXLSX(data, statusEl))
+        .catch(() => {
+            // Protocolo file:// bloquea fetch — pedir al usuario que seleccione el archivo
+            statusEl.textContent = "⚠️ No se pudo cargar el catálogo automáticamente. Selecciona el XLSX manualmente.";
+            statusEl.className = "status-badge status-warn";
 
-            oficinas = XLSX.utils.sheet_to_json(hoja, { defval: "" })
-                .map(o => {
-                    let claveOf = String(o.CLAVE).trim();
+            const container = document.getElementById("xlsxStatusContainer");
+            const label = document.createElement("label");
+            label.className = "file-btn";
+            label.style.marginTop = "8px";
+            label.innerHTML = `<span>📁 Seleccionar OFICINAS NOMENCLATURAS.xlsx</span>
+                <input type="file" accept=".xlsx" hidden id="xlsxManual">`;
+            container.appendChild(label);
 
-                    // Normalizar claves numéricas
-                    if (/^\d+$/.test(claveOf)) {
-                        claveOf = claveOf.padStart(4, "0");
-                    }
-
-                    return {
-                        CLAVE: claveOf,
-                        NOMBRE: String(o.NOMBRE).trim(),
-                        NOMENCLATURA: String(o.NOMENCLATURA).trim().toUpperCase(),
-                        DIRECCION: String(o.DIRECCION).trim()
-                    };
-                })
-                .filter(o => o.CLAVE && o.NOMENCLATURA);
-
-            console.log("📘 Catálogo de oficinas cargado:", oficinas.length);
-        })
-        .catch(err => {
-            alert("❌ Error cargando el catálogo de oficinas");
-            console.error(err);
+            document.addEventListener("change", e => {
+                if (e.target.id !== "xlsxManual") return;
+                const reader = new FileReader();
+                reader.onload = ev => procesarXLSX(ev.target.result, statusEl);
+                reader.readAsArrayBuffer(e.target.files[0]);
+            });
         });
 }
 
+function procesarXLSX(data, statusEl) {
+    const wb = XLSX.read(data, { type: "array" });
+    const hoja = wb.Sheets[wb.SheetNames[0]];
+
+    oficinas = XLSX.utils.sheet_to_json(hoja, { defval: "" })
+        .map(o => {
+            let claveOf = String(o.CLAVE).trim();
+
+            // Normalizar claves numéricas a 4 dígitos
+            if (/^\d+$/.test(claveOf)) {
+                claveOf = claveOf.padStart(4, "0");
+            }
+
+            return {
+                CLAVE: claveOf,
+                NOMBRE: String(o.NOMBRE).trim(),
+                NOMENCLATURA: String(o.NOMENCLATURA).trim().toUpperCase(),
+                DIRECCION: String(o.DIRECCION).trim()
+            };
+        })
+        .filter(o => o.CLAVE && o.NOMENCLATURA);
+
+    statusEl.textContent = `✅ Catálogo cargado: ${oficinas.length} oficinas`;
+    statusEl.className = "status-badge status-ok";
+    console.log("📘 Catálogo de oficinas cargado:", oficinas.length);
+}
 
 /* ===============================
    CARGA CSV
 =============================== */
 document.getElementById("csvPersonas").addEventListener("change", e => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+
+    // Mostrar nombre del archivo seleccionado
+    document.getElementById("csvNombre").textContent = "📄 " + archivo.name;
+
     const reader = new FileReader();
 
     reader.onload = ev => {
@@ -57,16 +85,28 @@ document.getElementById("csvPersonas").addEventListener("change", e => {
             .split("\n")
             .filter(l => l.trim());
 
+        if (lines.length < 2) {
+            document.getElementById("csvStatus").textContent = "❌ CSV vacío o sin datos";
+            document.getElementById("csvStatus").className = "status-badge status-error";
+            return;
+        }
+
+        // Detectar separador
         let sep = ",";
         if (lines[0].includes("\t")) sep = "\t";
         else if (lines[0].includes(";")) sep = ";";
-        const headers = lines[0].split(sep).map(h => h.toLowerCase());
 
-        const idxClave = headers.findIndex(h => h.includes("clave"));
-        const idxActivo = headers.findIndex(h => h.includes("activo"));
-        const idxNombre = headers.findIndex(h =>
-        h.includes("nombre") || h.includes("descripcion")
-        );
+        const headers = lines[0].split(sep).map(h => h.trim().toLowerCase());
+
+        const idxClave   = headers.findIndex(h => h.includes("clave"));
+        const idxActivo  = headers.findIndex(h => h.includes("activo"));
+        const idxNombre  = headers.findIndex(h => h.includes("nombre") || h.includes("descripcion"));
+
+        if (idxClave === -1) {
+            document.getElementById("csvStatus").textContent = "❌ El CSV no tiene columna 'Clave'";
+            document.getElementById("csvStatus").className = "status-badge status-error";
+            return;
+        }
 
         personas = [];
 
@@ -75,19 +115,32 @@ document.getElementById("csvPersonas").addEventListener("change", e => {
             const clave = (cols[idxClave] || "").trim().toUpperCase();
             if (!clave) continue;
 
+            // Extraer nomenclatura: primeros 3 caracteres alfabéticos del inicio
+            const matchNom = clave.match(/^([A-Z]{3})/);
+            const nomenclatura = matchNom ? matchNom[1] : clave.substring(0, 3);
+
             personas.push({
-            clave,
-            claveCompleta: clave,
-            nombreReal: idxNombre >= 0
-                ? (cols[idxNombre] || "").trim()
-                : (cols[1] || "").trim(), // fallback típico columna 2
-            nomenclatura: clave.substring(0, 3),
-            activo: (cols[idxActivo] || "").toLowerCase() === "true"
-        });
+                clave,
+                claveCompleta: clave,
+                nombreReal: idxNombre >= 0
+                    ? (cols[idxNombre] || "").trim()
+                    : (cols[1] || "").trim(),   // fallback columna 2
+                nomenclatura,
+                activo: idxActivo >= 0
+                    ? (cols[idxActivo] || "").trim().toLowerCase() === "true"
+                    : true // si no hay columna activo, asumir activo
+            });
         }
+
+        const total = personas.length;
+        const activos = personas.filter(p => p.activo).length;
+        const statusEl = document.getElementById("csvStatus");
+        statusEl.textContent = `✅ ${total} claves cargadas (${activos} activas)`;
+        statusEl.className = "status-badge status-ok";
+        console.log("📗 CSV cargado:", total, "registros");
     };
 
-    reader.readAsText(e.target.files[0], "UTF-8");
+    reader.readAsText(archivo, "UTF-8");
 });
 
 /* ===============================
@@ -95,98 +148,118 @@ document.getElementById("csvPersonas").addEventListener("change", e => {
 =============================== */
 
 function procesar() {
-    if (!personas.length || !oficinas.length) {
-        alert("Carga primero el CSV y el XLSX");
+    // Validaciones previas
+    const empleadoRaw = document.getElementById("empleado").value.trim();
+    if (!empleadoRaw) {
+        alert("⚠️ Ingresa el número de empleado");
+        return;
+    }
+    if (!personas.length) {
+        alert("⚠️ Carga primero el archivo CSV con las claves del usuario");
+        return;
+    }
+    if (!oficinas.length) {
+        alert("⚠️ El catálogo de oficinas no está disponible. Espera a que cargue o selecciónalo manualmente.");
         return;
     }
 
-    const empleado = document.getElementById("empleado").value.padStart(6, "0");
+    const empleado = empleadoRaw.padStart(6, "0");
+
+    // Leer oficinas a asignar (normalizar a mayúsculas y recortar)
     const oficinasInput = document.getElementById("oficinasInput").value
-        .split("\n").map(o => o.trim()).filter(Boolean);
-        const oficinasQuitarRaw = document.getElementById("oficinasQuitarInput").value
-    .split("\n")
-    .map(o => o.trim().toUpperCase())
-    .filter(Boolean);
+        .split("\n")
+        .map(o => o.trim().toUpperCase())
+        .filter(Boolean);
 
-let modoQuitar = null; // "NUM" | "NOM"
+    const oficinasQuitarRaw = document.getElementById("oficinasQuitarInput").value
+        .split("\n")
+        .map(o => o.trim().toUpperCase())
+        .filter(Boolean);
 
-// Detectar modo por el primer valor
-if (oficinasQuitarRaw.length > 0) {
-    const primero = oficinasQuitarRaw[0];
-
-    if (/^\d+$/.test(primero)) {
-        modoQuitar = "NUM";
-    } else if (/^[A-Z]{3}$/.test(primero)) {
-        modoQuitar = "NOM";
-    } else {
-        alert("Formato inválido en oficinas a quitar");
-        return;
+    // Detectar modo de las oficinas a quitar por el primer valor
+    let modoQuitar = null; // "NUM" | "NOM"
+    if (oficinasQuitarRaw.length > 0) {
+        const primero = oficinasQuitarRaw[0];
+        if (/^\d+$/.test(primero)) {
+            modoQuitar = "NUM";
+        } else if (/^[A-Z]{2,4}$/.test(primero)) {
+            modoQuitar = "NOM";
+        } else {
+            alert("⚠️ Formato inválido en 'Oficinas a quitar'.\nUsa solo números (0001) o nomenclatura (MXN).");
+            return;
+        }
     }
-}
 
-    const mapOficinas = {};
-    oficinas.forEach(o => mapOficinas[o.CLAVE] = o);
+    // Mapa rápido por CLAVE y por NOMENCLATURA
+    const mapOficinas   = {};
+    const mapPorNom     = {};
+    oficinas.forEach(o => {
+        mapOficinas[o.CLAVE] = o;
+        mapPorNom[o.NOMENCLATURA] = o;
+    });
 
-        const nomUsuarioActivas = new Set();
-        const nomUsuarioInactivas = new Set();
-        const personasActivasPorNom = {};
+    // Índices del CSV del usuario
+    const nomUsuarioActivas   = new Set();
+    const nomUsuarioInactivas = new Set();
+    const personasActivasPorNom = {};
 
-        personas.forEach(p => {
-            if (p.activo) {
-                nomUsuarioActivas.add(p.nomenclatura);
-
-                if (!personasActivasPorNom[p.nomenclatura]) {
-                    personasActivasPorNom[p.nomenclatura] = [];
-                }
-                personasActivasPorNom[p.nomenclatura].push(p);
-            } else {
-                nomUsuarioInactivas.add(p.nomenclatura);
+    personas.forEach(p => {
+        if (p.activo) {
+            nomUsuarioActivas.add(p.nomenclatura);
+            if (!personasActivasPorNom[p.nomenclatura]) {
+                personasActivasPorNom[p.nomenclatura] = [];
             }
-        });
+            personasActivasPorNom[p.nomenclatura].push(p);
+        } else {
+            nomUsuarioInactivas.add(p.nomenclatura);
+        }
+    });
 
     const tiene = [], faltan = [], inactivas = [], bajas = [], errores = [];
     const debeTener = new Set();
     const oficinasQuitarSet = new Set();
 
-// Normalizar oficinas a quitar
-oficinasQuitarRaw.forEach(o => {
+    // Construir set de oficinas a quitar
+    let errorEnQuitar = false;
+    oficinasQuitarRaw.forEach(o => {
+        if (errorEnQuitar) return;
 
-    // ===== MODO NUMÉRICO =====
-    if (modoQuitar === "NUM") {
-        if (!/^\d+$/.test(o)) {
-            alert("Todas las oficinas a quitar deben ser números");
-            throw new Error("Formato mixto");
+        if (modoQuitar === "NUM") {
+            if (!/^\d+$/.test(o)) {
+                alert(`⚠️ Formato mixto en oficinas a quitar: "${o}" no es numérico.`);
+                errorEnQuitar = true;
+                return;
+            }
+            const clave = o.padStart(4, "0");
+            const of = mapOficinas[clave];
+            if (!of) {
+                alert(`⚠️ La oficina ${clave} no existe en el catálogo XLSX.`);
+                errorEnQuitar = true;
+                return;
+            }
+            oficinasQuitarSet.add(of.NOMENCLATURA);
         }
 
-        const clave = o.padStart(4, "0");
-        const of = mapOficinas[clave];
-
-        if (!of) {
-            alert(`La oficina ${clave} no existe en el XLSX`);
-            throw new Error("Oficina inválida");
+        if (modoQuitar === "NOM") {
+            if (!/^[A-Z]{2,4}$/.test(o)) {
+                alert(`⚠️ Formato mixto en oficinas a quitar: "${o}" no es nomenclatura válida.`);
+                errorEnQuitar = true;
+                return;
+            }
+            oficinasQuitarSet.add(o);
         }
+    });
 
-        // Guardamos NOMENCLATURA
-        oficinasQuitarSet.add(of.NOMENCLATURA);
-    }
+    if (errorEnQuitar) return;
 
-    // ===== MODO NOMENCLATURA =====
-    if (modoQuitar === "NOM") {
-        if (!/^[A-Z]{3}$/.test(o)) {
-            alert("Todas las oficinas a quitar deben ser nomenclatura (3 letras)");
-            throw new Error("Formato mixto");
-        }
-
-        oficinasQuitarSet.add(o);
-    }
-});
-
+    // Clasificar oficinas a asignar
     oficinasInput.forEach(cod => {
-        if (/^\d+$/.test(cod)) cod = cod.padStart(4, "0");
+        // Normalizar numérica a 4 dígitos
+        let codigoNorm = /^\d+$/.test(cod) ? cod.padStart(4, "0") : cod;
 
-        const of = mapOficinas[cod];
+        const of = mapOficinas[codigoNorm] || mapPorNom[codigoNorm];
         if (!of) {
-            errores.push([cod, "Oficina no existe en XLSX"]);
+            errores.push([cod, "Oficina no existe en catálogo XLSX"]);
             return;
         }
 
@@ -202,83 +275,116 @@ oficinasQuitarRaw.forEach(o => {
         }
     });
 
-        const modoQuitarEspecifico = oficinasQuitarSet.size > 0;
+    // Calcular bajas
+    const modoQuitarEspecifico = oficinasQuitarSet.size > 0;
 
-            nomUsuarioActivas.forEach(nom => {
+    nomUsuarioActivas.forEach(nom => {
+        // Nunca inhabilitar algo que se va a agregar
+        if (debeTener.has(nom)) return;
 
-            // Nunca inhabilitar algo que se pidió agregar
-            if (debeTener.has(nom)) return;
+        // Si hay lista específica a quitar, solo esas
+        if (modoQuitarEspecifico && !oficinasQuitarSet.has(nom)) return;
 
-            // Si hay lista explícita para quitar
-            if (modoQuitarEspecifico && !oficinasQuitarSet.has(nom)) {
-                return;
-            }
-
-            const personasCsv = personasActivasPorNom[nom] || [];
-
-            personasCsv.forEach(p => {
-                bajas.push([
-                    p.claveCompleta,
-                    p.nombreReal,
-                    nom,
-                    "ACTIVA EN CSV",
-                    "INHABILITAR"
-                ]);
-            });
+        const personasCsv = personasActivasPorNom[nom] || [];
+        personasCsv.forEach(p => {
+            bajas.push([
+                p.claveCompleta,
+                p.nombreReal,
+                nom,
+                "ACTIVA EN CSV",
+                "INHABILITAR"
+            ]);
         });
+    });
 
+    // Pintar tablas y mostrar conteos
+    pintar("tablaTiene",    ["CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], tiene,    "emptyTiene",    "conteoTiene");
+    pintar("tablaInactivas",["CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], inactivas,"emptyInactivas","conteoInactivas");
+    pintar("tablaFaltan",   ["CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], faltan,   "emptyFaltan",   "conteoFaltan");
+    pintar("tablaBajas",    ["CLAVE CSV", "DESCRIPCIÓN CSV", "NOM", "ESTADO CSV", "ACCIÓN"], bajas, "emptyBajas", "conteoBajas");
+    pintar("tablaErrores",  ["OFICINA", "ERROR"], errores, "emptyErrores", "conteoErrores");
 
-    pintar("tablaTiene", ["CLAVE","NOMBRE","NOM","DIR","ACCIÓN"], tiene);
-    pintar("tablaInactivas", ["CLAVE","NOMBRE","NOM","DIR","ACCIÓN"], inactivas);
-    pintar("tablaFaltan", ["CLAVE","NOMBRE","NOM","DIR","ACCIÓN"], faltan);
-    pintar("tablaBajas", ["CLAVE CSV", "DESCRIPCIÓN CSV", "NOM", "ESTADO CSV", "ACCIÓN"],
-    bajas
-    );
-    pintar("tablaErrores", ["OFICINA","ERROR"], errores);
+    // Resumen general
+    mostrarResumen(tiene, inactivas, faltan, bajas, errores);
+
+    // Hacer scroll al resultado
+    setTimeout(() => {
+        document.querySelector(".dashboard").scrollIntoView({ behavior: "smooth" });
+    }, 100);
+}
+
+/* ===============================
+   RESUMEN BANNER
+=============================== */
+function mostrarResumen(tiene, inactivas, faltan, bajas, errores) {
+    const banner = document.getElementById("resumenBanner");
+    banner.style.display = "flex";
+    banner.innerHTML = `
+        <div class="resumen-item"><span class="dot dot-green"></span><strong>${tiene.length}</strong> activas</div>
+        <div class="resumen-item"><span class="dot dot-indigo"></span><strong>${inactivas.length}</strong> reactivar</div>
+        <div class="resumen-item"><span class="dot dot-yellow"></span><strong>${faltan.length}</strong> agregar</div>
+        <div class="resumen-item"><span class="dot dot-red"></span><strong>${bajas.length}</strong> inhabilitar</div>
+        <div class="resumen-item"><span class="dot dot-dark"></span><strong>${errores.length}</strong> inválidas</div>
+    `;
 }
 
 /* ===============================
    PINTAR TABLAS
 =============================== */
-function pintar(id, headers, data) {
-    const t = document.getElementById(id);
-    t.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-    data.forEach(r => {
-        t.innerHTML += "<tr>" + r.map(c => `<td>${c}</td>`).join("") + "</tr>";
-    });
-}
-document.addEventListener("DOMContentLoaded", () => {
-    cargarXLSXAutomatico();
-});
+function pintar(idTabla, headers, data, idEmpty, idConteo) {
+    const t = document.getElementById(idTabla);
+    const emptyEl = document.getElementById(idEmpty);
+    const conteoEl = document.getElementById(idConteo);
 
-document.getElementById('btnExportar').addEventListener('click', () => {
-    // Crear un nuevo libro de Excel
+    t.innerHTML = "";
+
+    if (data.length === 0) {
+        emptyEl.style.display = "block";
+        conteoEl.textContent = "";
+    } else {
+        emptyEl.style.display = "none";
+        conteoEl.textContent = `(${data.length})`;
+        t.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+        data.forEach(r => {
+            t.innerHTML += "<tr>" + r.map(c => `<td>${c}</td>`).join("") + "</tr>";
+        });
+    }
+}
+
+/* ===============================
+   EXPORTAR EXCEL
+=============================== */
+document.getElementById("btnExportar").addEventListener("click", () => {
     const wb = XLSX.utils.book_new();
 
-    // Array con id de tablas y nombre de cada sheet
     const tablas = [
-        { id: 'tablaTiene', nombre: 'Claves_Tiene' },
-        { id: 'tablaInactivas', nombre: 'Claves_Inactivas' },
-        { id: 'tablaFaltan', nombre: 'Claves_Faltan' },
-        { id: 'tablaErrores', nombre: 'Oficinas_Invalidas' },
-        { id: 'tablaBajas', nombre: 'Claves_Inhabilitar' }
+        { id: "tablaTiene",    nombre: "Claves_Tiene"     },
+        { id: "tablaInactivas",nombre: "Claves_Inactivas" },
+        { id: "tablaFaltan",   nombre: "Claves_Faltan"    },
+        { id: "tablaErrores",  nombre: "Oficinas_Invalidas"},
+        { id: "tablaBajas",    nombre: "Claves_Inhabilitar"}
     ];
 
     tablas.forEach(tabla => {
         const table = document.getElementById(tabla.id);
 
-        // Si la tabla está vacía, poner un mensaje
-        if (table.rows.length === 0) {
-            const ws_data = [["No hay datos"]];
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        // CORRECCIÓN: <= 1 porque la fila 0 siempre es el encabezado
+        if (!table || table.rows.length <= 1) {
+            const ws = XLSX.utils.aoa_to_sheet([["No hay datos"]]);
             XLSX.utils.book_append_sheet(wb, ws, tabla.nombre);
         } else {
-            // Convertir tabla HTML a hoja Excel
             const ws = XLSX.utils.table_to_sheet(table);
             XLSX.utils.book_append_sheet(wb, ws, tabla.nombre);
         }
     });
 
-    // Descargar el archivo
-    XLSX.writeFile(wb, 'Claves_Oficinas.xlsx');
+    const empleado = document.getElementById("empleado").value.trim() || "empleado";
+    XLSX.writeFile(wb, `Claves_${empleado}.xlsx`);
+});
+
+/* ===============================
+   INICIALIZACIÓN
+=============================== */
+document.addEventListener("DOMContentLoaded", () => {
+    cargarXLSXAutomatico();
 });

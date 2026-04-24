@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Claves repetidas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asignación de Claves por Oficina</title>
 
 <!-- CSS -->
 <link rel="stylesheet" href="styles.css">
@@ -18,61 +19,71 @@
 <section class="formulario">
     <div>
         <strong>Número de empleado</strong>
-        <input type="text" id="empleado" placeholder="79101">
+        <input type="text" id="empleado" placeholder="79101" maxlength="10">
     </div>
 
-        <div class="file">
-            <strong>1 CSV – Claves que YA tiene el usuario</strong>
-            <label class="file-btn">
-                Seleccionar archivo CSV
-                <input type="file" id="csvPersonas" accept=".csv" hidden>
-            </label>
-        </div>
+    <div class="file">
+        <strong>1 CSV – Claves que YA tiene el usuario</strong>
+        <label class="file-btn" id="labelCsv">
+            <span id="csvNombre">📂 Seleccionar archivo CSV</span>
+            <input type="file" id="csvPersonas" accept=".csv" hidden>
+        </label>
+        <span id="csvStatus" class="status-badge"></span>
+    </div>
 
     <div class="full">
         <strong>2 Claves de OFICINAS a Asignar</strong>
         <textarea id="oficinasInput" placeholder="0001&#10;1C&#10;J105"></textarea>
     </div>
-    
+
     <div class="full">
         <strong>3 Oficinas a QUITAR (opcional)</strong>
         <textarea id="oficinasQuitarInput" placeholder="0005&#10;0021&#10;DHD"></textarea>
     </div>
 
     <div class="acciones">
-        <button id="btnProcesar">Procesar</button>
+        <button id="btnProcesar">⚡ Procesar</button>
+        <button id="btnExportar">📥 Exportar Excel</button>
     </div>
 
-        <div class="acciones">
-        <button id="btnExportar">Exportar Excel</button>
-        </div>
-    </section>
+    <!-- Estado de carga del catálogo XLSX -->
+    <div class="full xlsx-status" id="xlsxStatusContainer">
+        <span id="xlsxStatus" class="status-badge status-loading">⏳ Cargando catálogo de oficinas…</span>
+    </div>
+</section>
 
-    <div class="dashboard">
+<div id="resumenBanner" class="resumen-banner" style="display:none"></div>
+
+<div class="dashboard">
 
     <section>
-        <h3>🟢 Claves que YA TIENE</h3>
+        <h3>🟢 Claves que YA TIENE <span class="conteo" id="conteoTiene"></span></h3>
         <table id="tablaTiene"></table>
+        <p class="empty-msg" id="emptyTiene" style="display:none">Sin resultados</p>
     </section>
 
     <section>
-        <h3>🟠 Claves INACTIVAS (REACTIVAR)</h3>
+        <h3>🟠 Claves INACTIVAS (REACTIVAR) <span class="conteo" id="conteoInactivas"></span></h3>
         <table id="tablaInactivas"></table>
+        <p class="empty-msg" id="emptyInactivas" style="display:none">Sin resultados</p>
     </section>
 
     <section>
-        <h3>🟡 Claves que FALTAN por agregar</h3>
+        <h3>🟡 Claves que FALTAN por agregar <span class="conteo" id="conteoFaltan"></span></h3>
         <table id="tablaFaltan"></table>
+        <p class="empty-msg" id="emptyFaltan" style="display:none">Sin resultados</p>
     </section>
 
     <section>
-        <h3>🔴 Oficinas inválidas</h3>
+        <h3>🔴 Oficinas inválidas <span class="conteo" id="conteoErrores"></span></h3>
         <table id="tablaErrores"></table>
+        <p class="empty-msg" id="emptyErrores" style="display:none">Sin resultados</p>
     </section>
 
     <section>
-        <h3>🔴 Claves que se deben INHABILITAR</h3>
+        <h3>🔴 Claves que se deben INHABILITAR <span class="conteo" id="conteoBajas"></span></h3>
         <table id="tablaBajas"></table>
+        <p class="empty-msg" id="emptyBajas" style="display:none">Sin resultados</p>
     </section>
 
 </div>
