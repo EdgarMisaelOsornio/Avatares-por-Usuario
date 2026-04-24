@@ -96,11 +96,16 @@ document.getElementById("csvPersonas").addEventListener("change", e => {
         if (lines[0].includes("\t")) sep = "\t";
         else if (lines[0].includes(";")) sep = ";";
 
-        const headers = lines[0].split(sep).map(h => h.trim().toLowerCase());
+        // Función para limpiar cada celda: quitar comillas y espacios
+        const limpiar = str => str.trim().replace(/^"|"$/g, "").trim();
+
+        const headers = lines[0].split(sep).map(h => limpiar(h).toLowerCase());
 
         const idxClave   = headers.findIndex(h => h.includes("clave"));
         const idxActivo  = headers.findIndex(h => h.includes("activo"));
-        const idxNombre  = headers.findIndex(h => h.includes("nombre") || h.includes("descripcion"));
+        const idxNombre  = headers.findIndex(h =>
+            h.includes("nombre") || h.includes("descripci") // cubre "descripción" e "descripcion"
+        );
 
         if (idxClave === -1) {
             document.getElementById("csvStatus").textContent = "❌ El CSV no tiene columna 'Clave'";
@@ -111,7 +116,7 @@ document.getElementById("csvPersonas").addEventListener("change", e => {
         personas = [];
 
         for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(sep);
+            const cols = lines[i].split(sep).map(limpiar); // ← quitar comillas en TODOS los valores
             const clave = (cols[idxClave] || "").trim().toUpperCase();
             if (!clave) continue;
 
@@ -140,7 +145,9 @@ document.getElementById("csvPersonas").addEventListener("change", e => {
         console.log("📗 CSV cargado:", total, "registros");
     };
 
+    // Intentar UTF-8; si hay caracteres inválidos, releer como Latin-1
     reader.readAsText(archivo, "UTF-8");
+    reader.onerror = () => reader.readAsText(archivo, "ISO-8859-1");
 });
 
 /* ===============================
