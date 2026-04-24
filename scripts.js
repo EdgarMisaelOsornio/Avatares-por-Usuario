@@ -252,11 +252,11 @@ function procesar() {
         debeTener.add(of.NOMENCLATURA);
 
         if (nomUsuarioActivas.has(of.NOMENCLATURA)) {
-            tiene.push([claveFinal, of.NOMBRE, of.NOMENCLATURA, of.DIRECCION, "ACTIVA"]);
+            tiene.push([of.CLAVE, claveFinal, of.NOMBRE, of.NOMENCLATURA, of.DIRECCION, "ACTIVA"]);
         } else if (nomUsuarioInactivas.has(of.NOMENCLATURA)) {
-            inactivas.push([claveFinal, of.NOMBRE, of.NOMENCLATURA, of.DIRECCION, "REACTIVAR"]);
+            inactivas.push([of.CLAVE, claveFinal, of.NOMBRE, of.NOMENCLATURA, of.DIRECCION, "REACTIVAR"]);
         } else {
-            faltan.push([claveFinal, of.NOMBRE, of.NOMENCLATURA, of.DIRECCION, "AGREGAR"]);
+            faltan.push([of.CLAVE, claveFinal, of.NOMBRE, of.NOMENCLATURA, of.DIRECCION, "AGREGAR"]);
         }
     });
 
@@ -283,9 +283,9 @@ function procesar() {
     });
 
     // Pintar tablas y mostrar conteos
-    pintar("tablaTiene",    ["CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], tiene,    "emptyTiene",    "conteoTiene");
-    pintar("tablaInactivas",["CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], inactivas,"emptyInactivas","conteoInactivas");
-    pintar("tablaFaltan",   ["CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], faltan,   "emptyFaltan",   "conteoFaltan");
+    pintar("tablaTiene",    ["N° OFICINA", "CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], tiene,    "emptyTiene",    "conteoTiene");
+    pintar("tablaInactivas",["N° OFICINA", "CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], inactivas,"emptyInactivas","conteoInactivas");
+    pintar("tablaFaltan",   ["N° OFICINA", "CLAVE", "NOMBRE", "NOM", "DIR", "ACCIÓN"], faltan,   "emptyFaltan",   "conteoFaltan");
     pintar("tablaBajas",    ["CLAVE CSV", "DESCRIPCIÓN CSV", "NOM", "ESTADO CSV", "ACCIÓN"], bajas, "emptyBajas", "conteoBajas");
     pintar("tablaErrores",  ["OFICINA", "ERROR"], errores, "emptyErrores", "conteoErrores");
 
